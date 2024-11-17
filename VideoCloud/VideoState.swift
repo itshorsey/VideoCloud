@@ -1,15 +1,7 @@
-//
-//  VideoState.swift
-//  VideoCloud
-//
-//  Created by Jonathan Horsman on 11/16/24.
-//
-
 import Foundation
 import AVKit
 import Combine
 
-/// Manages the state and functionality of the video player
 @MainActor
 class VideoState: ObservableObject {
     // MARK: - Published Properties
@@ -20,7 +12,7 @@ class VideoState: ObservableObject {
     @Published var currentPlaybackTime: Double = 0
     @Published var contentDuration: Double = 0
     @Published var playbackState: PlaybackState = .paused
-    @Published var isSpeedUp: Bool = false
+    @Published var isScrubbingAt2x: Bool = false
     
     // MARK: - Properties
     let player: AVPlayer
@@ -97,7 +89,6 @@ class VideoState: ObservableObject {
         let videoNames = (1...4).map { "video\($0)" }
         
         return videoNames.compactMap { name in
-            // Try both lowercase and uppercase extensions
             if let url = Bundle.main.url(forResource: name, withExtension: "mov") {
                 return url
             }
@@ -109,7 +100,6 @@ class VideoState: ObservableObject {
     }
     
     // MARK: - Public Methods
-    /// Toggle video playback between playing and paused states
     func togglePlayback() {
         if isPlaying {
             player.pause()
@@ -119,30 +109,23 @@ class VideoState: ObservableObject {
         isPlaying.toggle()
     }
     
-    /// Preview seek - updates frame without committing to position
     func previewSeek(to time: Double) {
         let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        // Use a looser tolerance for preview seeking to improve performance
-        let tolerance = CMTime(value: 100, timescale: 1000) // 100ms tolerance
+        let tolerance = CMTime(value: 100, timescale: 1000)
         player.seek(to: cmTime, toleranceBefore: tolerance, toleranceAfter: tolerance)
     }
     
-    /// Seek to a specific time in the video
     func seek(to time: Double) {
         let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
     }
     
-    /// Set the playback state
     func setPlaybackState(_ state: PlaybackState) {
         playbackState = state
         
         switch state {
         case .playing:
             player.play()
-            if isSpeedUp {
-                player.rate = 2.0
-            }
             isPlaying = true
         case .paused:
             player.pause()
@@ -153,20 +136,21 @@ class VideoState: ObservableObject {
         }
     }
     
-    /// Set the playback speed
-    func setPlaybackSpeed(_ speedUp: Bool) {
-        print("Setting speed up to: \(speedUp)")
-        isSpeedUp = speedUp
-        
-        // Only change speed if we're actually playing
-        if isPlaying {
-            let rate: Float = speedUp ? 2.0 : 1.0
-            print("Changing player rate to: \(rate)")
-            player.rate = rate
+    func enableSpeedScrubbing() {
+        guard !isScrubbingAt2x else { return }
+        isScrubbingAt2x = true
+        if !isPlaying {
+            player.play()
         }
+        player.rate = 2.0
     }
     
-    /// Load a random video from available videos in Assets
+    func disableSpeedScrubbing() {
+        guard isScrubbingAt2x else { return }
+        isScrubbingAt2x = false
+        player.rate = 1.0
+    }
+    
     func loadRandomVideo() {
         Task {
             isLoading = true
@@ -181,25 +165,22 @@ class VideoState: ObservableObject {
                 let randomURL = videos.randomElement()!
                 let asset = AVAsset(url: randomURL)
                 
-                // Check if the video can be played
                 let playable = try await asset.load(.isPlayable)
                 guard playable else {
                     throw VideoError.videoNotPlayable
                 }
                 
-                // Create new player item and set it
                 let playerItem = AVPlayerItem(asset: asset)
                 player.replaceCurrentItem(with: playerItem)
                 currentVideoURL = randomURL
                 
-                // Reset playback state
                 isPlaying = false
                 playbackState = .paused
                 currentPlaybackTime = 0
+                isScrubbingAt2x = false
                 await seek(to: 0)
                 error = nil
                 
-                // Print the loaded video path for debugging
                 print("Successfully loaded video: \(randomURL.lastPathComponent)")
                 
             } catch {
@@ -213,7 +194,6 @@ class VideoState: ObservableObject {
                         } else {
                             print("video\(i).mov not found")
                         }
-                        // Try uppercase extension
                         if let path = Bundle.main.path(forResource: "video\(i)", ofType: "MOV") {
                             print("video\(i).MOV path: \(path)")
                         } else {
@@ -226,7 +206,6 @@ class VideoState: ObservableObject {
     }
 }
 
-// MARK: - Custom Error Types
 enum VideoError: LocalizedError {
     case noVideosAvailable
     case videoNotPlayable
@@ -241,7 +220,6 @@ enum VideoError: LocalizedError {
     }
 }
 
-// MARK: - PlaybackState Enum
 enum PlaybackState {
     case playing
     case paused
