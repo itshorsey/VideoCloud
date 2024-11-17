@@ -25,6 +25,7 @@ enum TimelineStyle {
         static let minVelocityForInertia: CGFloat = 200
         static let decelerationRate: CGFloat = 0.85
         static let inertiaUpdateInterval = 1.0 / 60.0
+        static let dragVelocityMultiplier: CGFloat = 1.5  // Added this constant
     }
     
     enum Haptics {

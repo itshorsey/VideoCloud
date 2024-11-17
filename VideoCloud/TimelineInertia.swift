@@ -7,13 +7,21 @@ import Foundation
 
 class TimelineInertia {
     private var timer: Timer?
-    private var velocity: CGFloat = 0
+    private var normalizedVelocity: Double = 0  // Now represents percentage/sec
+    private var contentDuration: Double = 0
     
     var onUpdate: ((Double) -> Void)?
     var onComplete: (() -> Void)?
     
-    func start(initialVelocity: CGFloat) {
-        velocity = initialVelocity
+    func start(initialVelocity: CGFloat, duration: Double, timelineWidth: CGFloat) {
+        self.contentDuration = duration
+        
+        // Convert physical velocity to normalized velocity (percentage/sec)
+        let velocityAsPercentage = (Double(initialVelocity) / Double(timelineWidth))
+        normalizedVelocity = velocityAsPercentage * duration
+        
+        // Scale for natural feel (can adjust these multipliers)
+        normalizedVelocity *= 2.0
         
         timer = Timer.scheduledTimer(
             withTimeInterval: TimelineStyle.Inertia.inertiaUpdateInterval,
@@ -26,19 +34,20 @@ class TimelineInertia {
     func stop() {
         timer?.invalidate()
         timer = nil
-        velocity = 0
+        normalizedVelocity = 0
     }
     
     private func update() {
-        velocity *= TimelineStyle.Inertia.decelerationRate
+        normalizedVelocity *= TimelineStyle.Inertia.decelerationRate
         
-        let translation = velocity * TimelineStyle.Inertia.inertiaUpdateInterval
-        let secondsPerPixel = 1.0 / Double(TimelineStyle.Animation.pixelsPerSecond)
-        let timeChange = Double(translation) * secondsPerPixel
+        // Calculate time change as percentage of total duration
+        let percentageChange = normalizedVelocity * TimelineStyle.Inertia.inertiaUpdateInterval
+        let timeChange = percentageChange
         
         onUpdate?(timeChange)
         
-        if abs(velocity) < TimelineStyle.Inertia.minVelocityForInertia {
+        // Stop when movement becomes negligible
+        if abs(percentageChange) < (0.001 * contentDuration) {  // 0.1% of duration
             stop()
             onComplete?()
         }

@@ -20,6 +20,7 @@ class VideoState: ObservableObject {
     @Published var currentPlaybackTime: Double = 0
     @Published var contentDuration: Double = 0
     @Published var playbackState: PlaybackState = .paused
+    @Published var isSpeedUp: Bool = false
     
     // MARK: - Properties
     let player: AVPlayer
@@ -139,6 +140,9 @@ class VideoState: ObservableObject {
         switch state {
         case .playing:
             player.play()
+            if isSpeedUp {
+                player.rate = 2.0
+            }
             isPlaying = true
         case .paused:
             player.pause()
@@ -146,6 +150,19 @@ class VideoState: ObservableObject {
         case .interacting:
             player.pause()
             isPlaying = false
+        }
+    }
+    
+    /// Set the playback speed
+    func setPlaybackSpeed(_ speedUp: Bool) {
+        print("Setting speed up to: \(speedUp)")
+        isSpeedUp = speedUp
+        
+        // Only change speed if we're actually playing
+        if isPlaying {
+            let rate: Float = speedUp ? 2.0 : 1.0
+            print("Changing player rate to: \(rate)")
+            player.rate = rate
         }
     }
     

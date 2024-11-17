@@ -100,8 +100,6 @@ struct TimelineView: View {
     }
     
     private func handleDragChange(_ value: DragGesture.Value) {
-        inertia.stop()
-        
         if !isDragging {
             isDragging = true
             dragStartTime = videoState.currentPlaybackTime
@@ -119,13 +117,15 @@ struct TimelineView: View {
             let currentTime = Date()
             let timeDelta = currentTime.timeIntervalSince(lastUpdateTime)
             if timeDelta > 0 {
-                let velocity = translation / CGFloat(timeDelta)
+                // Apply the multiplier to the translation for adjusted drag speed
+                let adjustedTranslation = translation * TimelineStyle.Inertia.dragVelocityMultiplier
+                let velocity = adjustedTranslation / CGFloat(timeDelta)
                 
                 lastDragLocation = value.location.x
                 lastUpdateTime = currentTime
                 
                 let secondsPerPixel = 1.0 / Double(TimelineStyle.Animation.pixelsPerSecond)
-                let timeChange = Double(translation) * secondsPerPixel
+                let timeChange = Double(adjustedTranslation) * secondsPerPixel
                 
                 let newTime = max(0, min(
                     videoState.contentDuration,
@@ -153,8 +153,15 @@ struct TimelineView: View {
             let translation = value.location.x - lastDragLocation
             let velocity = translation / CGFloat(timeDelta)
             
+            // Calculate total timeline width
+            let totalTimelineWidth = CGFloat(videoState.contentDuration) * TimelineStyle.Animation.pixelsPerSecond
+            
             if abs(velocity) > TimelineStyle.Inertia.minVelocityForInertia {
-                inertia.start(initialVelocity: -velocity)  // Negative because our drag calculation is reversed
+                inertia.start(
+                    initialVelocity: -velocity,
+                    duration: videoState.contentDuration,
+                    timelineWidth: totalTimelineWidth
+                )
             } else {
                 completeGesture()
             }
