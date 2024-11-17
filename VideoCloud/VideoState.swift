@@ -73,7 +73,7 @@ class VideoState: ObservableObject {
                 self.isPlaying = false
                 self.playbackState = .paused
                 Task {
-                    await self.player.seek(to: .zero)
+                    await self.seek(to: 0)
                 }
             }
             .store(in: &cancellables)
@@ -116,6 +116,14 @@ class VideoState: ObservableObject {
             player.play()
         }
         isPlaying.toggle()
+    }
+    
+    /// Preview seek - updates frame without committing to position
+    func previewSeek(to time: Double) {
+        let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+        // Use a looser tolerance for preview seeking to improve performance
+        let tolerance = CMTime(value: 100, timescale: 1000) // 100ms tolerance
+        player.seek(to: cmTime, toleranceBefore: tolerance, toleranceAfter: tolerance)
     }
     
     /// Seek to a specific time in the video
@@ -171,7 +179,7 @@ class VideoState: ObservableObject {
                 isPlaying = false
                 playbackState = .paused
                 currentPlaybackTime = 0
-                await player.seek(to: .zero)
+                await seek(to: 0)
                 error = nil
                 
                 // Print the loaded video path for debugging
