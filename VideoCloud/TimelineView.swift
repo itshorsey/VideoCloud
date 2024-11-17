@@ -14,39 +14,32 @@ struct TimelineView: View {
     private let timelineHeight: CGFloat = 4
     private let timelineColor = Color.gray.opacity(0.3)
     private let progressColor = Color.orange
-    private let centerLineColor = Color.white
-    private let centerLineWidth: CGFloat = 2
+    private let pixelsPerSecond: CGFloat = 50
     
     var body: some View {
         GeometryReader { geometry in
             let viewWidth = geometry.size.width
-            let totalTimelineWidth = viewWidth * 3
+            let totalTimelineWidth = CGFloat(videoState.contentDuration) * pixelsPerSecond
             
             ZStack {
-                // Container for timeline that allows horizontal movement
+                // Timeline container
                 HStack(spacing: 0) {
-                    // Background timeline
                     Rectangle()
                         .fill(timelineColor)
-                        .frame(width: totalTimelineWidth, height: timelineHeight)
-                    
-                    // Progress overlay (orange portion)
+                        .frame(width: max(totalTimelineWidth, viewWidth), height: timelineHeight)
                         .overlay(
                             Rectangle()
                                 .fill(progressColor)
                                 .frame(
-                                    width: calculateProgressWidth(
-                                        totalWidth: totalTimelineWidth
-                                    )
+                                    width: CGFloat(videoState.currentPlaybackTime) * pixelsPerSecond
                                 ),
                             alignment: .leading
                         )
-                        // Calculate offset based on playback progress
-                        .offset(x: calculateTimelineOffset(
+                        .offset(x: calculateOffset(
                             viewWidth: viewWidth,
-                            totalWidth: totalTimelineWidth
+                            timelineWidth: totalTimelineWidth,
+                            pixelsPerSecond: pixelsPerSecond
                         ))
-                        // Animate timeline movement during playback
                         .animation(
                             videoState.playbackState == .playing ?
                                 .linear(duration: 0.05) :
@@ -55,45 +48,26 @@ struct TimelineView: View {
                         )
                 }
                 
-                // Center line (playhead position marker) - always centered
-                Rectangle()
-                    .fill(centerLineColor)
-                    .frame(width: centerLineWidth, height: timelineHeight * 2)
+                // Centered playhead
+                PlayheadView(height: timelineHeight * 2)
                     .position(x: viewWidth / 2, y: timelineHeight / 2)
             }
-            .clipped() // Prevent timeline from showing outside bounds
+            .clipped()
         }
         .frame(height: timelineHeight)
-        .padding(.vertical, 20) // Touch area padding
+        .padding(.vertical, 20)
     }
     
-    /// Calculates the width of the orange progress indicator
-    private func calculateProgressWidth(totalWidth: CGFloat) -> CGFloat {
-        guard videoState.contentDuration > 0 else { return 0 }
+    private func calculateOffset(viewWidth: CGFloat, timelineWidth: CGFloat, pixelsPerSecond: CGFloat) -> CGFloat {
+        let startPosition = viewWidth / 2  // Always start at center
+        let currentPosition = CGFloat(videoState.currentPlaybackTime) * pixelsPerSecond
         
-        let progress = videoState.currentPlaybackTime / videoState.contentDuration
-        return totalWidth * CGFloat(progress)
-    }
-    
-    /// Calculates the timeline's offset to keep playhead centered while content moves left
-    private func calculateTimelineOffset(viewWidth: CGFloat, totalWidth: CGFloat) -> CGFloat {
-        guard videoState.contentDuration > 0 else {
-            // When no video is loaded, align start of timeline with center
-            return viewWidth / 2
-        }
-        
-        let progress = videoState.currentPlaybackTime / videoState.contentDuration
-        
-        // Start offset is viewWidth/2 (to center start of timeline)
-        // As progress increases, shift timeline left
-        let startOffset = viewWidth / 2
-        let progressOffset = progress * (totalWidth - viewWidth)
-        
-        return startOffset - progressOffset
+        // For all videos, ensure the timeline starts at center position
+        return startPosition - currentPosition
     }
 }
 
-// MARK: - Preview Helpers
+// Keep existing preview helpers and previews as is
 extension VideoState {
     static func previewState(
         duration: Double = 60.0,
@@ -108,27 +82,6 @@ extension VideoState {
     }
 }
 
-#Preview("Timeline - Playing (25%)") {
-    TimelineView(videoState: .previewState(currentTime: 15.0, playbackState: .playing))
-        .frame(width: 300)
-        .padding()
-        .background(Color.black)
-}
-
-#Preview("Timeline - Paused (50%)") {
-    TimelineView(videoState: .previewState(currentTime: 30.0, playbackState: .paused))
-        .frame(width: 300)
-        .padding()
-        .background(Color.black)
-}
-
-#Preview("Timeline - Near End (90%)") {
-    TimelineView(videoState: .previewState(currentTime: 54.0, playbackState: .paused))
-        .frame(width: 300)
-        .padding()
-        .background(Color.black)
-}
-
 #Preview("Timeline - Start") {
     TimelineView(videoState: .previewState())
         .frame(width: 300)
@@ -136,8 +89,29 @@ extension VideoState {
         .background(Color.black)
 }
 
-#Preview("Timeline - End") {
+#Preview("Timeline - Middle (50%)") {
+    TimelineView(videoState: .previewState(currentTime: 30.0))
+        .frame(width: 300)
+        .padding()
+        .background(Color.black)
+}
+
+#Preview("Timeline - Near End (90%)") {
+    TimelineView(videoState: .previewState(currentTime: 54.0))
+        .frame(width: 300)
+        .padding()
+        .background(Color.black)
+}
+
+#Preview("Timeline - End (100%)") {
     TimelineView(videoState: .previewState(currentTime: 60.0))
+        .frame(width: 300)
+        .padding()
+        .background(Color.black)
+}
+
+#Preview("Timeline - Playing") {
+    TimelineView(videoState: .previewState(currentTime: 15.0, playbackState: .playing))
         .frame(width: 300)
         .padding()
         .background(Color.black)
