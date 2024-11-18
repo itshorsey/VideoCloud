@@ -12,6 +12,7 @@ struct TimelineHaptics {
     private let dragEndFeedback = UIImpactFeedbackGenerator(style: .medium)
     private let boundaryFeedback = UIImpactFeedbackGenerator(style: .rigid)
     private let periodicFeedback = UIImpactFeedbackGenerator(style: .soft)
+    private let speedTransitionFeedback = UIImpactFeedbackGenerator(style: .rigid)
     
     func onDragStart() {
         dragStartFeedback.prepare()
@@ -31,5 +32,10 @@ struct TimelineHaptics {
     func onPeriodicFeedback() {
         periodicFeedback.prepare()
         periodicFeedback.impactOccurred(intensity: 0.5)
+    }
+    
+    func onSpeedChange() {
+        speedTransitionFeedback.prepare()
+        speedTransitionFeedback.impactOccurred(intensity: 0.75)
     }
 }

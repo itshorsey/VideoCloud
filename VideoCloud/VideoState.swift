@@ -13,6 +13,8 @@ class VideoState: ObservableObject {
     @Published var contentDuration: Double = 0
     @Published var playbackState: PlaybackState = .paused
     @Published var isScrubbingAt2x: Bool = false
+    @Published var isDragging: Bool = false
+    private var stateBeforeScrubbingAt2x: PlaybackState = .paused
     
     // MARK: - Properties
     let player: AVPlayer
@@ -121,35 +123,41 @@ class VideoState: ObservableObject {
     }
     
     func setPlaybackState(_ state: PlaybackState) {
-        playbackState = state
-        
-        switch state {
-        case .playing:
-            player.play()
-            isPlaying = true
-        case .paused:
-            player.pause()
-            isPlaying = false
-        case .interacting:
-            player.pause()
-            isPlaying = false
+            playbackState = state
+            // Update drag state
+            isDragging = (state == .interacting)
+            
+            print("VideoState - Setting playback state to: \(state), isDragging: \(isDragging)")
+            
+            switch state {
+            case .playing:
+                player.play()
+                isPlaying = true
+            case .paused:
+                player.pause()
+                isPlaying = false
+            case .interacting:
+                player.pause()
+                isPlaying = false
+            }
         }
-    }
     
     func enableSpeedScrubbing() {
-        guard !isScrubbingAt2x else { return }
-        isScrubbingAt2x = true
-        if !isPlaying {
+            guard !isScrubbingAt2x else { return }
+            stateBeforeScrubbingAt2x = playbackState
+            isScrubbingAt2x = true
             player.play()
+            player.rate = 2.0
         }
-        player.rate = 2.0
-    }
     
     func disableSpeedScrubbing() {
-        guard isScrubbingAt2x else { return }
-        isScrubbingAt2x = false
-        player.rate = 1.0
-    }
+            guard isScrubbingAt2x else { return }
+            isScrubbingAt2x = false
+            player.rate = 1.0
+            
+            // Restore previous state
+            setPlaybackState(stateBeforeScrubbingAt2x)
+        }
     
     func loadRandomVideo() {
         Task {

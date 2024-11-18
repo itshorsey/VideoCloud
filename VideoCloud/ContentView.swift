@@ -5,11 +5,13 @@ struct ContentView: View {
     @StateObject private var videoState = VideoState()
     
     var body: some View {
+        
         GeometryReader { geometry in
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 32) {
+                    // Video Player
                     VideoPlayerView(player: videoState.player, videoState: videoState)
                         .frame(
                             width: geometry.size.width * 0.9,
@@ -21,8 +23,18 @@ struct ContentView: View {
                         .cornerRadius(12)
                         .shadow(radius: 8)
                     
+                    // Duration Label
+                    DurationLabel(
+                                currentTime: videoState.currentPlaybackTime,
+                                duration: videoState.contentDuration,
+                                isDragging: videoState.isDragging,  // Use the explicit state
+                                useSolidFill: true
+                            )
+                    
+                    // Timeline
                     TimelineView(videoState: videoState)
                     
+                    // Controls
                     HStack(spacing: 40) {
                         Button(action: {
                             videoState.togglePlayback()
@@ -61,6 +73,7 @@ struct ContentView: View {
         }
     }
 }
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

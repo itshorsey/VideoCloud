@@ -16,10 +16,11 @@ struct SpeedIndicator: View {
 struct VideoPlayerView: View {
     let player: AVPlayer
     @ObservedObject var videoState: VideoState
+    private let haptics = TimelineHaptics()
     
     var body: some View {
         ZStack {
-            VideoPlayer(player: player)
+            AVPlayerControllerRepresentable(player: player)
                 .onDisappear {
                     player.pause()
                     player.replaceCurrentItem(with: nil)
@@ -31,16 +32,19 @@ struct VideoPlayerView: View {
                 .gesture(
                     LongPressGesture(minimumDuration: 0.1)
                         .onEnded { _ in
+                            haptics.onSpeedChange()
                             videoState.enableSpeedScrubbing()
                         }
                 )
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onEnded { _ in
+                            haptics.onSpeedChange()
                             videoState.disableSpeedScrubbing()
                         }
                 )
             
+            // 2x Speed Indicator
             if videoState.isScrubbingAt2x {
                 VStack {
                     Spacer()
@@ -49,11 +53,28 @@ struct VideoPlayerView: View {
                         SpeedIndicator()
                             .padding(.trailing, 16)
                             .padding(.bottom, 16)
-                            .transition(.opacity)
+                            .transition(.opacity.combined(with: .scale))
+                            .animation(.spring(response: 0.3), value: videoState.isScrubbingAt2x)
                     }
                 }
             }
         }
+    }
+}
+
+// Custom UIViewControllerRepresentable to wrap AVPlayerViewController
+struct AVPlayerControllerRepresentable: UIViewControllerRepresentable {
+    let player: AVPlayer
+    
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = false  // This hides the controls
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+        // Updates not needed
     }
 }
 
