@@ -18,14 +18,14 @@ enum TimelineStyle {
     }
     
     enum Animation {
-        static let pixelsPerSecond: CGFloat = 50
+        static let pixelsPerSecond: CGFloat = 150
     }
     
     enum Inertia {
-        static let minVelocityForInertia: CGFloat = 200
-        static let decelerationRate: CGFloat = 0.85
+        static let minVelocityForInertia: CGFloat = 50
+        static let decelerationRate: CGFloat = 0.92
         static let inertiaUpdateInterval = 1.0 / 60.0
-        static let dragVelocityMultiplier: CGFloat = 1.5  // Added this constant
+        static let dragVelocityMultiplier: CGFloat = 8.0
     }
     
     enum Haptics {

@@ -88,7 +88,7 @@ class VideoState: ObservableObject {
     }
     
     private func getAllVideoURLs() -> [URL] {
-        let videoNames = (1...4).map { "video\($0)" }
+        let videoNames = (1...6).map { "video\($0)" }
         
         return videoNames.compactMap { name in
             if let url = Bundle.main.url(forResource: name, withExtension: "mov") {

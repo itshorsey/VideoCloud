@@ -7,8 +7,9 @@ import Foundation
 
 class TimelineInertia {
     private var timer: Timer?
-    private var normalizedVelocity: Double = 0  // Now represents percentage/sec
+    private var normalizedVelocity: Double = 0
     private var contentDuration: Double = 0
+    private var currentTime: Double = 0
     
     var onUpdate: ((Double) -> Void)?
     var onComplete: (() -> Void)?
@@ -20,8 +21,9 @@ class TimelineInertia {
         let velocityAsPercentage = (Double(initialVelocity) / Double(timelineWidth))
         normalizedVelocity = velocityAsPercentage * duration
         
-        // Scale for natural feel (can adjust these multipliers)
-        normalizedVelocity *= 2.0
+        // More aggressive scaling for shorter videos
+        let durationScale = max(2.0, min(5.0, 20.0 / duration))
+        normalizedVelocity *= 5.0 * durationScale  // Increased base multiplier
         
         timer = Timer.scheduledTimer(
             withTimeInterval: TimelineStyle.Inertia.inertiaUpdateInterval,
@@ -38,16 +40,28 @@ class TimelineInertia {
     }
     
     private func update() {
-        normalizedVelocity *= TimelineStyle.Inertia.decelerationRate
+        // Adaptive deceleration based on remaining distance to bounds
+        let distanceToEnd = max(0, contentDuration - currentTime)
+        let distanceToStart = currentTime
+        let minDistance = min(distanceToEnd, distanceToStart)
+        
+        // Increase deceleration when approaching boundaries
+        let adaptiveDeceleration = minDistance < (contentDuration * 0.1) 
+            ? TimelineStyle.Inertia.decelerationRate * 0.8  // Faster deceleration near bounds
+            : TimelineStyle.Inertia.decelerationRate
+        
+        normalizedVelocity *= adaptiveDeceleration
         
         // Calculate time change as percentage of total duration
         let percentageChange = normalizedVelocity * TimelineStyle.Inertia.inertiaUpdateInterval
         let timeChange = percentageChange
         
+        currentTime += timeChange
         onUpdate?(timeChange)
         
         // Stop when movement becomes negligible
-        if abs(percentageChange) < (0.001 * contentDuration) {  // 0.1% of duration
+        let stopThreshold = 0.001 * contentDuration
+        if abs(percentageChange) < stopThreshold {
             stop()
             onComplete?()
         }

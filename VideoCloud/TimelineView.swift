@@ -151,7 +151,7 @@ struct TimelineView: View {
         let timeDelta = endTime.timeIntervalSince(lastUpdateTime)
         if timeDelta > 0 {
             let translation = value.location.x - lastDragLocation
-            let velocity = translation / CGFloat(timeDelta)
+            let velocity = (translation / CGFloat(timeDelta)) * TimelineStyle.Inertia.dragVelocityMultiplier
             
             // Calculate total timeline width
             let totalTimelineWidth = CGFloat(videoState.contentDuration) * TimelineStyle.Animation.pixelsPerSecond
