@@ -20,45 +20,25 @@ struct VideoPlayerView: View {
     
     var body: some View {
         ZStack {
-            AVPlayerControllerRepresentable(player: player)
-                .onDisappear {
-                    player.pause()
-                    player.replaceCurrentItem(with: nil)
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                )
-                .gesture(
-                    LongPressGesture(minimumDuration: 0.1)
-                        .onEnded { _ in
-                            haptics.onSpeedChange()
-                            videoState.enableSpeedScrubbing()
-                        }
-                )
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onEnded { _ in
-                            haptics.onSpeedChange()
-                            videoState.disableSpeedScrubbing()
-                        }
-                )
+            VideoPlayer(player: player)
+                .allowsHitTesting(false)
             
-            // 2x Speed Indicator
-            if videoState.isScrubbingAt2x {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        SpeedIndicator()
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 16)
-                            .transition(.opacity.combined(with: .scale))
-                            .animation(.spring(response: 0.3), value: videoState.isScrubbingAt2x)
+            // Full-screen tap area
+            Color.clear
+                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onTapGesture {
+                    videoState.togglePlayback()
+                }
+                .onLongPressGesture(minimumDuration: 0.1) {
+                    videoState.enableSpeedScrubbing()
+                } onPressingChanged: { isPressing in
+                    if !isPressing {
+                        videoState.disableSpeedScrubbing()
                     }
                 }
-            }
         }
+        .edgesIgnoringSafeArea(.all)
     }
 }
 

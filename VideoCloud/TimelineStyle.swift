@@ -8,7 +8,7 @@ import SwiftUI
 enum TimelineStyle {
     enum Layout {
         static let height: CGFloat = 84
-        static let trackHeight: CGFloat = 36
+        static let trackHeight: CGFloat = 40
         static let horizontalPadding: CGFloat = 20
     }
     
@@ -18,7 +18,7 @@ enum TimelineStyle {
     }
     
     enum Animation {
-        static let pixelsPerSecond: CGFloat = 150
+        static let pixelsPerSecond: CGFloat = 75
     }
     
     enum Inertia {

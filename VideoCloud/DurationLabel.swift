@@ -18,31 +18,36 @@ struct DurationLabel: View {
     }
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DurationLabelStyle.Layout.spacing) {
             Text(formatTime(currentTime))
-            Text("|")
+                .font(DurationLabelStyle.Typography.font)
+                .foregroundColor(DurationLabelStyle.Typography.color)
+            
+            Text("/")
+                .font(DurationLabelStyle.Typography.font)
+                .foregroundColor(DurationLabelStyle.Typography.color.opacity(0.5))
+            
             Text(formatTime(duration))
+                .font(DurationLabelStyle.Typography.font)
+                .foregroundColor(DurationLabelStyle.Typography.color)
         }
-        .foregroundColor(.white)
-        .padding(.horizontal, isDragging ? 16 : 8)
-        .padding(.vertical, isDragging ? 8 : 4)
+        .padding(.horizontal, DurationLabelStyle.Layout.horizontalPadding)
+        .padding(.vertical, DurationLabelStyle.Layout.verticalPadding)
         .background(
-            Group {
-                if isDragging {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.black.opacity(0.8))
-                        .overlay(
-                            GeometryReader { geo in
-                                Rectangle()
-                                    .fill(Color.orange.opacity(0.3))
-                                    .frame(width: geo.size.width * progress)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                        )
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    DurationLabelStyle.Colors.background
+                        .blendMode(.colorBurn)
+                    
+                    if isDragging {
+                        Rectangle()
+                            .fill(Color.orange.opacity(0.3))
+                            .frame(width: geo.size.width * progress)
+                    }
                 }
             }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: DurationLabelStyle.Layout.cornerRadius))
         .animation(.spring(response: 0.3), value: isDragging)
     }
     

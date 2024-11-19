@@ -105,10 +105,13 @@ class VideoState: ObservableObject {
     func togglePlayback() {
         if isPlaying {
             player.pause()
+            isPlaying = false
+            playbackState = .paused
         } else {
             player.play()
+            isPlaying = true
+            playbackState = .playing
         }
-        isPlaying.toggle()
     }
     
     func previewSeek(to time: Double) {

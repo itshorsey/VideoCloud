@@ -176,5 +176,6 @@ struct TimelineView: View {
         } else {
             videoState.setPlaybackState(.paused)
         }
+        inertia.stop()
     }
 }

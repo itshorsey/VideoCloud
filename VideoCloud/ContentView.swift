@@ -5,67 +5,57 @@ struct ContentView: View {
     @StateObject private var videoState = VideoState()
     
     var body: some View {
-        
         GeometryReader { geometry in
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
+                // Video Player
+                VideoPlayerView(player: videoState.player, videoState: videoState)
+                    .edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 32) {
-                    // Video Player
-                    VideoPlayerView(player: videoState.player, videoState: videoState)
-                        .frame(
-                            width: geometry.size.width * 0.9,
-                            height: min(
-                                geometry.size.width * 0.9 * 9/16,
-                                geometry.size.height * 0.5
-                            )
-                        )
-                        .cornerRadius(12)
-                        .shadow(radius: 8)
+                // Controls Container
+                VStack(spacing: 24) {
+                    Spacer()
                     
                     // Duration Label
                     DurationLabel(
-                                currentTime: videoState.currentPlaybackTime,
-                                duration: videoState.contentDuration,
-                                isDragging: videoState.isDragging,  // Use the explicit state
-                                useSolidFill: true
-                            )
+                        currentTime: videoState.currentPlaybackTime,
+                        duration: videoState.contentDuration,
+                        isDragging: videoState.playbackState == .interacting,
+                        useSolidFill: true
+                    )
                     
                     // Timeline
                     TimelineView(videoState: videoState)
                     
-                    // Controls
-                    HStack(spacing: 40) {
-                        Button(action: {
-                            videoState.togglePlayback()
-                        }) {
-                            Image(systemName: videoState.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 44, height: 44)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Button(action: {
-                            videoState.loadRandomVideo()
-                        }) {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 44, height: 44)
-                                .foregroundColor(.white)
-                        }
+                    // Refresh Button
+                    Button(action: { videoState.loadRandomVideo() }) {
+                        Image(systemName: "arrow.clockwise")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(Color(hex: "746767"))
                     }
-                    
-                    if videoState.isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(1.5)
-                    }
-                    
-                    Spacer()
+                    .buttonStyle(ScaleButtonStyle())
+                    .padding(.bottom, 40)
                 }
-                .padding(.top, geometry.safeAreaInsets.top)
+                .padding(.horizontal, 20)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.3),
+                            .black.opacity(0.7)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                
+                // Loading indicator
+                if videoState.isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                }
             }
         }
         .task {
