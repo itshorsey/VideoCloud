@@ -11,6 +11,19 @@ struct ContentView: View {
                 VideoPlayerView(player: videoState.player, videoState: videoState)
                     .edgesIgnoringSafeArea(.all)
                 
+                // Progress bar at top
+                VStack {
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(.white)
+                            .frame(width: geo.size.width * CGFloat(videoState.currentPlaybackTime / videoState.contentDuration))
+                            .frame(height: 2)
+                    }
+                    .frame(height: 2)
+                    .padding(.top, 40)
+                    Spacer()
+                }
+                
                 // Controls Container
                 VStack(spacing: 24) {
                     Spacer()

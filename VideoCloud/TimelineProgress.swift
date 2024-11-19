@@ -19,6 +19,7 @@ struct TimelineProgress: View {
     var body: some View {
         ZStack(alignment: .leading) {
             // Base track (transparent)
+            
             Rectangle()
                 .fill(Color.clear)
                 .frame(
