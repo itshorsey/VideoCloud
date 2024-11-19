@@ -39,15 +39,26 @@ struct ContentView: View {
                     // Timeline
                     TimelineView(videoState: videoState)
                     
-                    // Refresh Button
-                    Button(action: { videoState.loadRandomVideo() }) {
-                        Image(systemName: "arrow.clockwise")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(Color(hex: "746767"))
+                    // Bottom controls
+                    HStack(spacing: 56) {
+                        Button(action: { videoState.togglePlayback() }) {
+                            Image(systemName: videoState.isPlaying ? "pause.fill" : "play.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.white)
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        
+                        Button(action: { videoState.loadRandomVideo() }) {
+                            Image(systemName: "arrow.clockwise")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(Color(hex: "746767"))
+                        }
+                        .buttonStyle(ScaleButtonStyle())
                     }
-                    .buttonStyle(ScaleButtonStyle())
                     .padding(.bottom, 40)
                 }
                 .padding(.horizontal, 20)

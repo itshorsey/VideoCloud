@@ -37,6 +37,11 @@ struct VideoPlayerView: View {
                         videoState.disableSpeedScrubbing()
                     }
                 }
+            
+            // Show 2x indicator when speed scrubbing
+            if videoState.isScrubbingAt2x {
+                SpeedIndicator()
+            }
         }
         .edgesIgnoringSafeArea(.all)
     }
